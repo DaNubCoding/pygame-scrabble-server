@@ -12,27 +12,28 @@ class Server:
     def run(self) -> None:
         self.listen()
         print("Closing sockets...")
-        self.player1.disconnect()
-        self.player2.disconnect()
+        for player in self.players:
+            player.disconnect()
         self.socket.close()
         print("Socket closed.")
 
     def listen(self) -> None:
         print("Listening for connections...")
-        self.player1 = Player(self, 1, *self.socket.accept())
-        self.player2 = Player(self, 2, *self.socket.accept())
+        self.players = [Player(self, 1, *self.socket.accept()), Player(self, 2, *self.socket.accept())]
         print("Both players have connected!")
         print("Creating receive threads...")
-        self.player1.create_thread()
-        self.player2.create_thread()
+        for player in self.players:
+            player.create_thread()
         print("Both threads have been created!")
 
-        while self.player1.alive and self.player2.alive:
-            if not self.player1.messages.empty():
-                message = self.player1.messages.get()
-                print("Player 1 made a move")
-                self.player2.send(message)
-            if not self.player2.messages.empty():
-                message = self.player2.messages.get()
-                print("Player 2 made a move")
-                self.player1.send(message)
+        while all([player.alive for player in self.players]):
+            for player in self.players:
+                if player.messages.empty(): continue
+                self.handle_message(player)
+
+    def handle_message(self, player: Player):
+        message = player.messages.get()
+        print(f"Player {player.id} made a move")
+        for other in self.players:
+            if other is player: continue
+            other.send(message)
