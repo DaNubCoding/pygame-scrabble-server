@@ -28,6 +28,9 @@ class Player:
         except ConnectionResetError:
             self.quit_queue.put(True)
             self.log("Connection lost")
+        except ConnectionAbortedError:
+            self.quit_queue.put(True)
+            self.log("Forcibly disconnected")
         else:
             self.messages.put(message)
 
@@ -48,3 +51,6 @@ class Player:
     @property
     def alive(self) -> bool:
         return self.quit_queue.empty()
+
+    def disconnect(self) -> None:
+        self.socket.close()

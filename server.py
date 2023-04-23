@@ -11,9 +11,11 @@ class Server:
 
     def run(self) -> None:
         self.listen()
-        print("Closing server socket...")
+        print("Closing sockets...")
+        self.player1.disconnect()
+        self.player2.disconnect()
         self.socket.close()
-        print("Socket closed, program will exit.")
+        print("Socket closed.")
 
     def listen(self) -> None:
         print("Listening for connections...")
@@ -28,9 +30,9 @@ class Server:
         while self.player1.alive and self.player2.alive:
             if not self.player1.messages.empty():
                 message = self.player1.messages.get()
-                print(f"Player 1: {message}")
+                print("Player 1 made a move")
                 self.player2.send(message)
             if not self.player2.messages.empty():
                 message = self.player2.messages.get()
-                print(f"Player 2: {message}")
+                print("Player 2 made a move")
                 self.player1.send(message)
