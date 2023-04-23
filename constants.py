@@ -1,0 +1,3 @@
+IP = "192.168.0.90"
+PORT = 1200
+ADDRESS = (IP, PORT)
