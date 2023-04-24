@@ -7,6 +7,7 @@ from threading import Thread
 from queue import Queue
 from typing import Any
 import socket as sock
+import pickle
 
 class Player:
     def __init__(self, server: Server, _id: int, socket: sock.socket, address: tuple[str, int]) -> None:
@@ -45,8 +46,12 @@ class Player:
         self.receive_thread = Thread(target=self.forever_receive)
         self.receive_thread.start()
 
+    def send_pickled(self, pickled: Any) -> None:
+        self.socket.send(pickled)
+
     def send(self, message: Any) -> None:
-        self.socket.send(message)
+        pickled = pickle.dumps(message)
+        self.socket.send(pickled)
 
     @property
     def alive(self) -> bool:

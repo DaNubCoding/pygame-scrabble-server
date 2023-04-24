@@ -1,6 +1,9 @@
+from enum import Enum, auto
 import socket as sock
+import pickle
 
 from constants import ADDRESS
+from tile_bag import TileBag
 from player import Player
 
 class Server:
@@ -8,6 +11,8 @@ class Server:
         self.socket = sock.socket(sock.AF_INET, sock.SOCK_STREAM)
         self.socket.bind(ADDRESS)
         self.socket.listen(2)
+
+        self.tile_bag = TileBag()
 
     def run(self) -> None:
         self.listen()
@@ -26,14 +31,26 @@ class Server:
             player.create_thread()
         print("Both threads have been created!")
 
+        for player in self.players:
+            player.send({"type": MessageType.ADD_TILES.name, "message": [self.tile_bag.get() for _ in range(7)]})
+
         while all([player.alive for player in self.players]):
             for player in self.players:
                 if player.messages.empty(): continue
                 self.handle_message(player)
 
     def handle_message(self, player: Player):
-        message = player.messages.get()
+        data = player.messages.get()
         print(f"Player {player.id} made a move")
         for other in self.players:
             if other is player: continue
-            other.send(message)
+            other.send_pickled(data)
+
+        # Can't unpickle this because the object "Message" is in another module
+        tiles_used = len(pickle.loads(data)["message"])
+        print(f"Granting player {player.id} {tiles_used} tiles")
+        player.send({"type": MessageType.ADD_TILES.name, "message": [self.tile_bag.get() for _ in range(tiles_used)]})
+
+class MessageType(Enum):
+    PLACE = auto()
+    ADD_TILES = auto()
