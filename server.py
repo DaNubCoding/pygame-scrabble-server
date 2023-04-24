@@ -32,7 +32,7 @@ class Server:
         print("Both threads have been created!")
 
         for player in self.players:
-            player.send({"type": MessageType.ADD_TILES.name, "message": [self.tile_bag.get() for _ in range(7)]})
+            player.send({"type": MessageType.REPLENISH.name, "message": [self.tile_bag.get() for _ in range(7)]})
 
         while all([player.alive for player in self.players]):
             for player in self.players:
@@ -48,8 +48,8 @@ class Server:
 
         tiles_used = len(pickle.loads(data)["message"])
         print(f"Granting player {player.id} {tiles_used} tiles")
-        player.send({"type": MessageType.ADD_TILES.name, "message": [self.tile_bag.get() for _ in range(tiles_used)]})
+        player.send({"type": MessageType.REPLENISH.name, "message": [self.tile_bag.get() for _ in range(tiles_used)]})
 
 class MessageType(Enum):
     PLACE = auto()
-    ADD_TILES = auto()
+    REPLENISH = auto()
