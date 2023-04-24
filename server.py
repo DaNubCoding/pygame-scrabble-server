@@ -46,7 +46,6 @@ class Server:
             if other is player: continue
             other.send_pickled(data)
 
-        # Can't unpickle this because the object "Message" is in another module
         tiles_used = len(pickle.loads(data)["message"])
         print(f"Granting player {player.id} {tiles_used} tiles")
         player.send({"type": MessageType.ADD_TILES.name, "message": [self.tile_bag.get() for _ in range(tiles_used)]})
