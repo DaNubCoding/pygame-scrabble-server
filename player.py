@@ -25,7 +25,7 @@ class Player:
 
     def receive(self) -> None:
         try:
-            message = self.socket.recv(1024)
+            pickled = self.socket.recv(1024)
         except ConnectionResetError:
             self.quit_queue.put(True)
             self.log("Connection lost")
@@ -33,7 +33,7 @@ class Player:
             self.quit_queue.put(True)
             self.log("Forcibly disconnected")
         else:
-            self.messages.put(message)
+            self.messages.put(pickle.loads(pickled))
 
     def forever_receive(self) -> None:
         self.log("Receive thread started")
@@ -45,9 +45,6 @@ class Player:
         self.quit_queue = Queue(maxsize=1)
         self.receive_thread = Thread(target=self.forever_receive)
         self.receive_thread.start()
-
-    def send_pickled(self, pickled: Any) -> None:
-        self.socket.send(pickled)
 
     def send(self, message: Any) -> None:
         pickled = pickle.dumps(message)

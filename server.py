@@ -1,6 +1,6 @@
 from enum import Enum, auto
+from random import choice
 import socket as sock
-import pickle
 
 from constants import ADDRESS
 from tile_bag import TileBag
@@ -13,6 +13,7 @@ class Server:
         self.socket.listen(2)
 
         self.tile_bag = TileBag()
+        self.turn = 0
 
     def run(self) -> None:
         self.listen()
@@ -33,23 +34,30 @@ class Server:
 
         for player in self.players:
             player.send({"type": MessageType.REPLENISH.name, "message": [self.tile_bag.get() for _ in range(7)]})
+        choice(self.players).send({"type": MessageType.TURN.name, "message": None})
 
         while all([player.alive for player in self.players]):
             for player in self.players:
                 if player.messages.empty(): continue
-                self.handle_message(player)
+                message = player.messages.get()
+                handler = getattr(self, f"message_type_{message['type'].lower()}")
+                handler(player, message)
 
-    def handle_message(self, player: Player):
-        data = player.messages.get()
+    def message_type_place(self, player: Player, message: dict):
         print(f"Player {player.id} made a move")
         for other in self.players:
             if other is player: continue
-            other.send_pickled(data)
+            other.send(message)
 
-        tiles_used = len(pickle.loads(data)["message"])
+        tiles_used = len(message["message"])
         print(f"Granting player {player.id} {tiles_used} tiles")
         player.send({"type": MessageType.REPLENISH.name, "message": [self.tile_bag.get() for _ in range(tiles_used)]})
 
+        self.turn = (self.turn + 1) % 2
+        self.players[self.turn].send({"type": MessageType.TURN.name, "message": None})
+
+# All types of messages that can be sent to or received from a client
 class MessageType(Enum):
     PLACE = auto()
     REPLENISH = auto()
+    TURN = auto()
