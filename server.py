@@ -1,5 +1,6 @@
 from enum import Enum, auto
 from random import choice
+from time import sleep
 import socket as sock
 
 from constants import ADDRESS
@@ -32,9 +33,13 @@ class Server:
             player.create_thread()
         print("Both threads have been created!")
 
+        sleep(0.02)
         for player in self.players:
             player.send({"type": MessageType.REPLENISH.name, "message": [self.tile_bag.get() for _ in range(7)]})
-        choice(self.players).send({"type": MessageType.TURN.name, "message": None})
+        sleep(0.02)
+        first_player = choice(self.players)
+        first_player.send({"type": MessageType.TURN.name, "message": None})
+        self.turn = self.players.index(first_player)
 
         while all([player.alive for player in self.players]):
             for player in self.players:
@@ -53,6 +58,7 @@ class Server:
         print(f"Granting player {player.id} {tiles_used} tiles")
         player.send({"type": MessageType.REPLENISH.name, "message": [self.tile_bag.get() for _ in range(tiles_used)]})
 
+        sleep(0.02)
         self.turn = (self.turn + 1) % 2
         self.players[self.turn].send({"type": MessageType.TURN.name, "message": None})
 
