@@ -59,7 +59,7 @@ class Server:
         for pos, letter in message["message"].items():
             self.board[pos] = letter
 
-        if not self.validate_placement(message["message"]) and not self.validate_words(message["message"]):
+        if not self.validate_placement(message["message"]):
             print(f"Player {player.id} made an invalid move")
             self.board.data = old_board
             player.send({"type": MessageType.INVALID.name, "message": self.invalid_reason})
@@ -86,6 +86,7 @@ class Server:
             self.invalid_reason = InvalidReason.NotInStraightLine.value
             return False
 
+        # Check if tiles are connected to the same horizontal/vertical word
         if horizontal:
             left = min(tiles, key=lambda pos: pos[0])[0]
             right = max(tiles, key=lambda pos: pos[0])[0]
@@ -103,7 +104,18 @@ class Server:
                     self.invalid_reason = InvalidReason.SeparateWords.value
                     return False
 
-        return True
+        # Early return if it's the first move (on center tile)
+        if (8, 8) in tiles:
+            return True
+
+        # Check if the word formed is disconnected from pre-existing words
+        for pos in tiles:
+            for offset in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                neighbor = (pos[0] + offset[0], pos[1] + offset[1])
+                if neighbor not in tiles and self.board[neighbor]:
+                    return True
+        self.invalid_reason = InvalidReason.Disconnected.value
+        return False
 
 # All types of messages that can be sent to or received from a client
 class MessageType(Enum):
@@ -114,4 +126,5 @@ class MessageType(Enum):
 
 class InvalidReason(Enum):
     NotInStraightLine = "All tiles must be placed on the same row or column!"
-    SeparateWords = "All tiles must be placed to form the same word!"
+    SeparateWords = "All tiles must be connected to the same word!"
+    Disconnected = "The word formed must be connected to pre-existing words!"
