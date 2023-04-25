@@ -17,6 +17,7 @@ class Server:
         self.board = Board()
         self.tile_bag = TileBag()
         self.turn = 0
+        self.invalid_reason = ""
 
     def run(self) -> None:
         self.listen()
@@ -58,10 +59,10 @@ class Server:
         for pos, letter in message["message"].items():
             self.board[pos] = letter
 
-        if not self.validate_placement(message["message"]):
+        if not self.validate_placement(message["message"]) and not self.validate_words(message["message"]):
             print(f"Player {player.id} made an invalid move")
             self.board.data = old_board
-            player.send({"type": MessageType.INVALID.name, "message": None})
+            player.send({"type": MessageType.INVALID.name, "message": self.invalid_reason})
             return
 
         for other in self.players:
@@ -82,6 +83,7 @@ class Server:
 
         # Neither vertical nor horizontal: not in a straight line
         if not horizontal and not vertical:
+            self.invalid_reason = InvalidReason.NotInStraightLine.value
             return False
 
         if horizontal:
@@ -90,6 +92,7 @@ class Server:
             y = next(iter(tiles))[1]
             for x in range(left, right):
                 if not self.board[(x, y)]:
+                    self.invalid_reason = InvalidReason.SeparateWords.value
                     return False
         elif vertical:
             top = min(tiles, key=lambda pos: pos[1])[1]
@@ -97,6 +100,7 @@ class Server:
             x = next(iter(tiles))[0]
             for y in range(top, bottom):
                 if not self.board[(x, y)]:
+                    self.invalid_reason = InvalidReason.SeparateWords.value
                     return False
 
         return True
@@ -107,3 +111,7 @@ class MessageType(Enum):
     REPLENISH = auto()
     TURN = auto()
     INVALID = auto()
+
+class InvalidReason(Enum):
+    NotInStraightLine = "All tiles must be placed on the same row or column!"
+    SeparateWords = "All tiles must be placed to form the same word!"
