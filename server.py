@@ -79,62 +79,27 @@ class Server:
     def validate_placement(self, tiles: dict[tuple[int, int], str]) -> bool:
         horizontal = len(set([pos[1] for pos in tiles])) == 1 # All y coord equal
         vertical = len(set([pos[0] for pos in tiles])) == 1   # All x coord equal
+
+        # Neither vertical nor horizontal: not in a straight line
         if not horizontal and not vertical:
             return False
 
-        # One letter placement
-        if horizontal and vertical:
-            pos = next(iter(tiles))
-            if self.board[(pos[0] - 1, pos[1])] or self.board[(pos[0] + 1, pos[1])]:
-                # more stuff coming here? (store word)
-                return True
-            if self.board[(pos[0], pos[1] - 1)] or self.board[(pos[0], pos[1] + 1)]:
-                # more stuff coming here? (store word)
-                return True
+        if horizontal:
+            left = min(tiles, key=lambda pos: pos[0])[0]
+            right = max(tiles, key=lambda pos: pos[0])[0]
+            y = next(iter(tiles))[1]
+            for x in range(left, right):
+                if not self.board[(x, y)]:
+                    return False
+        elif vertical:
+            top = min(tiles, key=lambda pos: pos[1])[1]
+            bottom = max(tiles, key=lambda pos: pos[1])[1]
+            x = next(iter(tiles))[0]
+            for y in range(top, bottom):
+                if not self.board[(x, y)]:
+                    return False
 
-        first_move = (8, 8) in tiles
-
-        if horizontal: # Horizontal word
-            start = next(iter(tiles))
-            found = connected = 1
-
-            left = start[0] - 1
-            while self.board[(left, start[1])]:
-                connected += 1
-                found += (left, start[1]) in tiles
-                left -= 1
-
-            right = start[0] + 1
-            while self.board[(right, start[1])]:
-                connected += 1
-                found += (right, start[1]) in tiles
-                right += 1
-
-            # If the placement is disconnected from everything
-            if connected == found and not first_move:
-                return False
-            return found == len(tiles)
-
-        else: # Vertical word
-            start = next(iter(tiles))
-            found = connected = 1
-
-            top = start[1] - 1
-            while self.board[(start[0], top)]:
-                connected += 1
-                found += (start[0], top) in tiles
-                top -= 1
-
-            bottom = start[1] + 1
-            while self.board[(start[0], bottom)]:
-                connected += 1
-                found += (start[0], bottom) in tiles
-                bottom += 1
-
-            # If the placement is disconnected from everything
-            if connected == found and not first_move:
-                return False
-            return found == len(tiles)
+        return True
 
 # All types of messages that can be sent to or received from a client
 class MessageType(Enum):
