@@ -7,6 +7,7 @@ from constants import ADDRESS
 from tile_bag import TileBag
 from player import Player
 from board import Board
+import twl as scrabble
 
 class Server:
     def __init__(self) -> None:
@@ -59,7 +60,7 @@ class Server:
         for pos, letter in message["message"].items():
             self.board[pos] = letter
 
-        if not self.validate_placement(message["message"]):
+        if not self.validate_placement(message["message"]) or not self.validate_words(message["message"]):
             print(f"Player {player.id} made an invalid move")
             self.board.data = old_board
             player.send({"type": MessageType.INVALID.name, "message": self.invalid_reason})
@@ -117,6 +118,54 @@ class Server:
         self.invalid_reason = InvalidReason.Disconnected.value
         return False
 
+    def validate_words(self, tiles: dict[tuple[int, int], str]) -> bool:
+        words = set()
+
+        # Check horizontal words
+        for pos in tiles:
+            word = ""
+            # Advance to left of tile
+            left = pos[0]
+            while self.board[(left, pos[1])]:
+                word = self.board[(left, pos[1])] + word
+                left -= 1
+            # Remove current letter as it would repeat
+            word = word[:-1]
+            # Advance to right of tile
+            right = pos[0]
+            while self.board[(right, pos[1])]:
+                word += self.board[(right, pos[1])]
+                right += 1
+            # If one letter then skip
+            if left + 1 == right - 1: continue
+            words.add(word)
+
+        # Check vertical words
+        for pos in tiles:
+            word = ""
+            # Advance to top of tile
+            top = pos[1]
+            while self.board[(pos[0], top)]:
+                word = self.board[(pos[0], top)] + word
+                top -= 1
+            # Remove current letter as it would repeat
+            word = word[:-1]
+            # Advance to bottom of tile
+            bottom = pos[1]
+            while self.board[(pos[0], bottom)]:
+                word += self.board[(pos[0], bottom)]
+                bottom += 1
+            # If one letter then skip
+            if top + 1 == bottom - 1: continue
+            words.add(word)
+
+        # Check for word validity
+        for word in words:
+            if not scrabble.check(word.lower()):
+                self.invalid_reason = InvalidReason.NonexistentWord.value % word
+                return False
+        return True
+
 # All types of messages that can be sent to or received from a client
 class MessageType(Enum):
     PLACE = auto()
@@ -128,3 +177,4 @@ class InvalidReason(Enum):
     NotInStraightLine = "All tiles must be placed on the same row or column!"
     SeparateWords = "All tiles must be connected to the same word!"
     Disconnected = "The word formed must be connected to pre-existing words!"
+    NonexistentWord = "The word '%s' doesn't exist!"
