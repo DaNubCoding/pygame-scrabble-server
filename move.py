@@ -72,8 +72,11 @@ class Move:
                 letter = self.board[(left, pos[1])]
                 word = letter + word
                 bonus = BONUS_LOCATIONS[(left, pos[1])]
-                score += LETTER_POINTS[letter] * bonus.value[0]
-                mult *= bonus.value[1]
+                if (left, pos[1]) in self.tiles:
+                    score += LETTER_POINTS[letter] * bonus.value[0]
+                    mult *= bonus.value[1]
+                else:
+                    score += LETTER_POINTS[letter]
                 left -= 1
             # Advance to right of tile
             right = pos[0] + 1
@@ -81,8 +84,11 @@ class Move:
                 letter = self.board[(right, pos[1])]
                 word += letter
                 bonus = BONUS_LOCATIONS[(right, pos[1])]
-                score += LETTER_POINTS[letter] * bonus.value[0]
-                mult *= bonus.value[1]
+                if (right, pos[1]) in self.tiles:
+                    score += LETTER_POINTS[letter] * bonus.value[0]
+                    mult *= bonus.value[1]
+                else:
+                    score += LETTER_POINTS[letter]
                 right += 1
             # If one letter then skip
             if left + 1 == right - 1: continue
@@ -102,8 +108,11 @@ class Move:
                 letter = self.board[(pos[0], top)]
                 word = letter + word
                 bonus = BONUS_LOCATIONS[(pos[0], top)]
-                score += LETTER_POINTS[letter] * bonus.value[0]
-                mult *= bonus.value[1]
+                if (pos[0], top) in self.tiles:
+                    score += LETTER_POINTS[letter] * bonus.value[0]
+                    mult *= bonus.value[1]
+                else:
+                    score += LETTER_POINTS[letter]
                 top -= 1
             # Advance to bottom of tile
             bottom = pos[1] + 1
@@ -111,8 +120,11 @@ class Move:
                 letter = self.board[(pos[0], bottom)]
                 word += letter
                 bonus = BONUS_LOCATIONS[(pos[0], bottom)]
-                score += LETTER_POINTS[letter] * bonus.value[0]
-                mult *= bonus.value[1]
+                if (pos[0], bottom) in self.tiles:
+                    score += LETTER_POINTS[letter] * bonus.value[0]
+                    mult *= bonus.value[1]
+                else:
+                    score += LETTER_POINTS[letter]
                 bottom += 1
             # If one letter then skip
             if top + 1 == bottom - 1: continue
