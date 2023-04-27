@@ -53,8 +53,9 @@ class Move:
         for pos in self.tiles:
             for offset in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
                 neighbor = (pos[0] + offset[0], pos[1] + offset[1])
-                if neighbor not in self.tiles and (self.board[neighbor] or (not 0 <= neighbor[0] < 15 and 0 <= neighbor[1] < 15)):
-                    return True
+                if neighbor not in self.tiles:
+                    if 0 <= neighbor[0] < 15 and 0 <= neighbor[1] < 15 and self.board[neighbor]:
+                        return True
         self.invalid_reason = InvalidReason.Disconnected.value
         return False
 
