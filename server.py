@@ -72,7 +72,8 @@ class Server:
 
         tiles_used = len(message["message"])
         print(f"Granting player {player.id} {tiles_used} tiles")
-        player.send({"type": MessageType.REPLENISH.name, "message": [self.tile_bag.get() for _ in range(tiles_used)]})
+        new_tiles = [tile for tile in [self.tile_bag.get() for _ in range(tiles_used)] if tile]
+        player.send({"type": MessageType.REPLENISH.name, "message": new_tiles})
 
         sleep(0.02)
         player.send({"type": MessageType.POINTS.name, "message": move.score})
