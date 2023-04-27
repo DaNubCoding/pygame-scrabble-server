@@ -53,7 +53,7 @@ class Move:
         for pos in self.tiles:
             for offset in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
                 neighbor = (pos[0] + offset[0], pos[1] + offset[1])
-                if neighbor not in self.tiles and self.board[neighbor]:
+                if neighbor not in self.tiles and (self.board[neighbor] or (not 0 <= neighbor[0] < 15 and 0 <= neighbor[1] < 15)):
                     return True
         self.invalid_reason = InvalidReason.Disconnected.value
         return False
@@ -68,7 +68,7 @@ class Move:
             score = 0
             # Advance to left of tile
             left = pos[0]
-            while self.board[(left, pos[1])]:
+            while left >= 0 and self.board[(left, pos[1])]:
                 letter = self.board[(left, pos[1])]
                 word = letter + word
                 bonus = BONUS_LOCATIONS[(left, pos[1])]
@@ -80,7 +80,7 @@ class Move:
                 left -= 1
             # Advance to right of tile
             right = pos[0] + 1
-            while self.board[(right, pos[1])]:
+            while right < 15 and self.board[(right, pos[1])]:
                 letter = self.board[(right, pos[1])]
                 word += letter
                 bonus = BONUS_LOCATIONS[(right, pos[1])]
@@ -104,7 +104,7 @@ class Move:
             score = 0
             # Advance to top of tile
             top = pos[1]
-            while self.board[(pos[0], top)]:
+            while top >= 0 and self.board[(pos[0], top)]:
                 letter = self.board[(pos[0], top)]
                 word = letter + word
                 bonus = BONUS_LOCATIONS[(pos[0], top)]
@@ -116,7 +116,7 @@ class Move:
                 top -= 1
             # Advance to bottom of tile
             bottom = pos[1] + 1
-            while self.board[(pos[0], bottom)]:
+            while bottom < 15 and self.board[(pos[0], bottom)]:
                 letter = self.board[(pos[0], bottom)]
                 word += letter
                 bonus = BONUS_LOCATIONS[(pos[0], bottom)]
